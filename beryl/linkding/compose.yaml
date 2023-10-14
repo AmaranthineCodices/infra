@@ -10,7 +10,7 @@ services:
       - linkding
     labels:
       - traefik.enable=true
-      - traefik.http.routers.linkding.rule=Host(`linkding.${ROOT_DOMAIN?Please supply a root domain name.}`)
+      - "traefik.http.routers.linkding.rule=Host(`linkding.${ROOT_DOMAIN?Please supply a root domain name.}`)"
       - traefik.http.routers.linkding.tls.certresolver=patches
       - traefik.http.services.linkding.loadbalancer.server.port=9090
   db:
@@ -24,7 +24,7 @@ services:
       start_period: 30s
     env_file: ./postgres.env
     volumes:
-      - ${ROOT_FOLDER}/pgdata:/pgdata
+      - "${ROOT_FOLDER}/pgdata:/pgdata"
     networks:
       - linkding
 networks:
