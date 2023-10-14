@@ -1,0 +1,24 @@
+providers:
+  docker:
+    endpoint: unix:///var/run/docker.sock
+    exposedByDefault: false
+    network: traefik
+  file:
+    directory: /routes
+    watch: true
+
+entryPoints:
+  web:
+    address: :80
+  webSecure:
+    address: :443
+
+api:
+  dashboard: true
+
+certificatesResolvers:
+  patches:
+    acme:
+      email: letsencrypt@lily.fyi
+      storage: /letsencrypt/acme.json
+      tlsChallenge: {}

@@ -1,0 +1,25 @@
+name: traefik
+services:
+  traefik:
+    container_name: traefik
+    image: traefik:v2.8
+    command: --providers.docker
+    logging:
+      driver: local
+    ports:
+      - "80:80"
+      - "443:443"
+      # Expose dashboard port only on the Tailscale interface
+      - "100.71.178.26:8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.toml:/etc/traefik/traefik.toml
+      - ./routes:/routes
+      - letsencrypt:/letsencrypt
+    restart: always
+networks:
+  default:
+    external:
+      name: traefik
+volumes:
+  lets-encrypt:

@@ -1,0 +1,31 @@
+version: '3'
+name: traefik
+services:
+  traefik:
+    container_name: traefik
+    image: traefik:v2.10
+    logging:
+      driver: local
+    environment:
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN:?Provide a DNS token for challenges.}
+    ports:
+      - "80:80"
+      - "443:443"
+      # Dashboard. Beryl is internal, so this is (reasonably) safe to expose by
+      # default, but it should be tightened up later.
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./routes.yaml:/etc/traefik/rules.yaml:ro
+      - ${ROOT_FOLDER?Please supply a root folder.}/letsencrypt:/letsencrypt
+    # Traefik sometimes exits with an exit code of 0. I'm not sure why yet.
+    restart: always
+    networks:
+      - traefik
+    extra_hosts:
+      - host.docker.internal:${HOST_IP:?Supply the host IP address.}
+networks:
+  default:
+    external:
+      name: traefik

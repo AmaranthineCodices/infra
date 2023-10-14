@@ -1,0 +1,12 @@
+http:
+  routers:
+    dashboard:
+      rule: Host(`agate.patches.systems`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+      service: api@internal
+      middlewares:
+        - tailscale_vpn
+  middlewares:
+    tailscale_vpn:
+      ipWhitelist:
+        sourceRange:
+          - "100.64.0.0/10"

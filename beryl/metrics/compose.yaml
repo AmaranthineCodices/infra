@@ -1,0 +1,54 @@
+version: '3'
+name: metrics
+services:
+  influxdb:
+    image: influxdb:latest
+    restart: unless-stopped
+    ports:
+      # Exposed directly because some stuff needs to not pass through Traefik.
+      - 8086:8086
+    volumes:
+      - ${ROOT_FOLDER?Please supply a root folder.}/influxdb/data:/var/lib/influxdb2
+      - ${ROOT_FOLDER?Please supply a root folder.}/influxdb/config:/etc/influxdb2
+    env_file: ./influx.env
+    networks:
+      - traefik
+      - metrics
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.influxdb.rule=Host(`influxdb.${ROOT_DOMAIN?Please supply a root domain name.}`)
+      - traefik.http.routers.influxdb.tls.certresolver=patches
+      - traefik.http.services.influxdb.loadbalancer.server.port=8086
+  grafana:
+    image: grafana/grafana-enterprise:latest
+    restart: unless-stopped
+    volumes:
+      - ${ROOT_FOLDER?Please supply a root folder.}/grafana:/var/lib/grafana
+    depends_on:
+      - influxdb
+    env_file: ./grafana.env
+    networks:
+      - traefik
+      - metrics
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.grafana.rule=Host(`grafana.${ROOT_DOMAIN?Please supply a root domain name.}`)
+      - traefik.http.routers.grafana.tls.certresolver=patches
+      - traefik.http.services.grafana.loadbalancer.server.port=3000
+  telegraf:
+    image: telegraf:1.28-alpine
+    restart: unless-stopped
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /:/hostfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    depends_on:
+      - influxdb
+    env_file: ./telegraf.env
+    command: ["telegraf", "--watch-config", "inotify"]
+    networks:
+      - metrics
+networks:
+  traefik:
+    external: true
+  metrics:

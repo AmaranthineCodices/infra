@@ -1,0 +1,44 @@
+providers:
+  docker:
+    endpoint: unix:///var/run/docker.sock
+    exposedByDefault: false
+    network: traefik
+  file:
+    filename: /etc/traefik/rules.yaml
+    watch: true
+
+entryPoints:
+  web:
+    address: :80
+    forwardedHeaders:
+      trustedIPs:
+        - "127.0.0.1/32"
+        - "192.168.0.0/16"
+        - "10.0.0.0/8"
+        - "100.64.0.0/10"
+    http:
+      redirections:
+        entryPoint:
+          to: webSecure
+  webSecure:
+    address: :443
+    forwardedHeaders:
+      trustedIPs:
+        - "127.0.0.1/32"
+        - "192.168.0.0/16"
+        - "10.0.0.0/8"
+        - "100.64.0.0/10"
+    http:
+      tls:
+        certResolver: patches
+
+api:
+  dashboard: true
+
+certificatesResolvers:
+  patches:
+    acme:
+      email: letsencrypt@patches.systems
+      storage: /letsencrypt/acme.json
+      dnsChallenge:
+        provider: cloudflare

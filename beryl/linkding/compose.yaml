@@ -1,0 +1,33 @@
+version: '3'
+name: linkding
+services:
+  linkding:
+    image: sissbruecker/linkding:latest
+    restart: unless-stopped
+    env_file: ./linkding.env
+    networks:
+      - traefik
+      - linkding
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.linkding.rule=Host(`linkding.${ROOT_DOMAIN?Please supply a root domain name.}`)
+      - traefik.http.routers.linkding.tls.certresolver=patches
+      - traefik.http.services.linkding.loadbalancer.server.port=9090
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    env_file: ./postgres.env
+    volumes:
+      - ${ROOT_FOLDER}/pgdata:/pgdata
+    networks:
+      - linkding
+networks:
+  linkding:
+  traefik:
+    external: true
